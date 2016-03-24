@@ -27,35 +27,51 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function(callBack) {
-  fs.readFile(this.paths.list, function (error, data) {
-    if (error) {
-      console.log('Read Error: ' + error);
-      return error;
-    }
-    var urlArray = data.toString().split('\n');
-    callBack(urlArray);
+exports.readListOfUrlsAsync = function() {
+  var self = this;
+  return new Promise(function (resolve, reject) {
+    fs.readFile(self.paths.list, function (error, data) {
+      if (error) {
+        reject(error);
+      } else {
+        var urlArray = data.toString().split('\n');
+        resolve(urlArray);
+      }
+    });
   });
 };
 
-exports.isUrlInList = function(url, callback) {
-  this.readListOfUrls(function(urlArray) {
-    if (urlArray.indexOf(url) >= 0) {
-      callback(true);
-    } else {
-      callback(false);
-    }
+exports.isUrlInListAsync = function(url) {
+  var self = this;
+  return new Promise(function (resolve, reject) {
+    self.readListOfUrlsAsync().then(function(urlArray) {
+      //do success routine
+      if (urlArray.indexOf(url) >= 0) {
+        resolve();
+      } else {
+        reject();
+      }
+
+    }).catch(function(error) {
+      //do error routine
+      console.log('Error in readListOfUrlsAsync');
+    });
   });
 };
 
 exports.addUrlToList = function(url, callback) {
   var self = this;
-  this.isUrlInList(url, function(is) {
-    if (!is) {
-      fs.appendFile(self.paths.list, url + '\n', callback);
-    } else {
-      callback();
-    }
+  // this.isUrlInList(url, function(is) {
+  //   if (!is) {
+  //     fs.appendFile(self.paths.list, url + '\n', callback);
+  //   } else {
+  //     callback();
+  //   }
+  // });
+  this.isUrlInListAsync(url).then(function() {
+    callback();
+  }).catch(function() {
+    fs.appendFile(self.paths.list, url + '\n', callback);
   });
 };
 
