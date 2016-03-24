@@ -86,8 +86,18 @@ exports.handleRequest = function (req, res) {
       // add URL to list
       archive.addUrlToList(postData.url, function() {
         // redirect to our index.html
-        res.writeHead(302, {'Location': '/index.html'});
-        res.end();
+        // COME BACK HERE
+        archive.isUrlArchived(postData.url, function(isExist) {
+          if (isExist) {
+            //redirect them to the actual page
+            res.writeHead(302, {'Location': '/index.html'});
+            res.end();
+          } else {
+            //redirect them to the loading page
+            res.writeHead(302, {'Location': '/index.html'});
+            res.end();
+          }
+        });
       });
     });
     
