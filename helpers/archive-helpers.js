@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
 var http = require('http');
+var Promise = require('bluebird');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -51,9 +52,10 @@ exports.addUrlToList = function(url, callback) {
   var self = this;
   this.isUrlInList(url, function(is) {
     if (!is) {
-      fs.writeFile(self.paths.list, url + '\n');
+      fs.appendFile(self.paths.list, url + '\n', callback);
+    } else {
+      callback();
     }
-    callback();
   });
 };
 

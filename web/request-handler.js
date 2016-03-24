@@ -52,10 +52,7 @@ exports.handleRequest = function (req, res) {
             // pipe the readable stream into response
             source.pipe(res);           
           } else {
-            // if not, add requested url to list and serve 404
-            archive.addUrlToList(req.url.substring(1), function() {
-              // supplying a callback to addUrlToList because it expects one - actually does nothing
-            });
+            // if not, serve 404
             res.writeHead(404, headers);
             res.end('404 Not Found');
           }
@@ -67,7 +64,8 @@ exports.handleRequest = function (req, res) {
     // for POST requests
   } else if (req.method === 'POST') {
     // check if requested url is in our archive
-
+    console.log('got POST req');
+    console.log(req.url);
     // gather the chunks of data from the POST request, which includes a url
     var body = '';
     req.on('data', function(data) {
@@ -86,15 +84,14 @@ exports.handleRequest = function (req, res) {
       // add URL to list
       archive.addUrlToList(postData.url, function() {
         // redirect to our index.html
-        // COME BACK HERE
         archive.isUrlArchived(postData.url, function(isExist) {
           if (isExist) {
             //redirect them to the actual page
-            res.writeHead(302, {'Location': '/index.html'});
+            res.writeHead(302, {'Location': '/' + postData.url});
             res.end();
           } else {
             //redirect them to the loading page
-            res.writeHead(302, {'Location': '/index.html'});
+            res.writeHead(302, {'Location': '/loading.html'});
             res.end();
           }
         });
