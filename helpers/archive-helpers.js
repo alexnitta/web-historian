@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var http = require('http');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -25,17 +26,70 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function() {
+exports.readListOfUrls = function(callBack) {
+  fs.readFile(this.paths.list, function (error, data) {
+    if (error) {
+      console.log('Read Error: ' + error);
+      return error;
+    }
+    var urlArray = data.toString().split('\n');
+    callBack(urlArray);
+  });
 };
 
-exports.isUrlInList = function() {
+exports.isUrlInList = function(url, callback) {
+  this.readListOfUrls(function(urlArray) {
+    if (urlArray.indexOf(url) >= 0) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 
-exports.addUrlToList = function() {
+exports.addUrlToList = function(url, callback) {
+  var self = this;
+  this.isUrlInList(url, function(is) {
+    if (!is) {
+      fs.writeFile(self.paths.list, url + '\n', callback);
+    }
+  });
 };
 
-exports.isUrlArchived = function() {
+exports.isUrlArchived = function(url, callback) {
+  fs.stat(this.paths.archivedSites + '/' + url, function(error, stats) {
+    if (error) {
+      console.log('Error: ' + error);
+      callback(false);
+    } else {
+      if (stats.isFile()) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  });
 };
 
-exports.downloadUrls = function() {
+exports.downloadUrls = function(url, callback) {
+  var self = this;
+  url.map(function (thisUrl) {
+    self.isUrlArchived(thisUrl, function(isExists) {
+      if (!isExists) {
+        var file = fs.createWriteStream(self.paths.archivedSites + '/' + thisUrl);
+        http.get({
+          host: thisUrl,
+          port: 80,
+          path: '/',
+          method: 'GET'
+        }, function(response) {
+          response.pipe(file);
+          callback(true);
+        });
+
+      } else {
+        console.log('Site is already in archive');
+      }
+    });
+  });
 };
