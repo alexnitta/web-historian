@@ -51,15 +51,15 @@ exports.addUrlToList = function(url, callback) {
   var self = this;
   this.isUrlInList(url, function(is) {
     if (!is) {
-      fs.writeFile(self.paths.list, url + '\n', callback);
+      fs.writeFile(self.paths.list, url + '\n');
     }
+    callback();
   });
 };
 
 exports.isUrlArchived = function(url, callback) {
   fs.stat(this.paths.archivedSites + '/' + url, function(error, stats) {
     if (error) {
-      console.log('Error: ' + error);
       callback(false);
     } else {
       if (stats.isFile()) {
