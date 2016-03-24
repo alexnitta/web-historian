@@ -15,11 +15,8 @@ exports.htmlFetcher = function () {
       return accum;
     }, []);
 
-    archive.downloadUrls(urlArray, function(url) {
-      // callback that runs on successful download - do nothing
-    });
-  }).catch(function () {
-    console.log('Error in htmlFetcher');
+    archive.downloadUrlsAsync(urlArray);
+    
   });
   // archive.readListOfUrls(function(urlArray) {
   //   console.log(urlArray);

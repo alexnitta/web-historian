@@ -45,17 +45,15 @@ exports.handleRequest = function (req, res) {
         source.pipe(res);
       } else {
         // it's not in our public folder, so check if it's in archived sites
-        archive.isUrlArchived(req.url, function(isArchived) {
-          if (isArchived) {
-            // if yes, serve from archive
-            var source = fs.createReadStream(archive.paths.archivedSites + req.url);
-            // pipe the readable stream into response
-            source.pipe(res);           
-          } else {
-            // if not, serve 404
-            res.writeHead(404, headers);
-            res.end('404 Not Found');
-          }
+        archive.isUrlArchivedAsync(req.url).then(function() {
+          // if yes, serve from archive
+          var source = fs.createReadStream(archive.paths.archivedSites + req.url);
+          // pipe the readable stream into response
+          source.pipe(res);  
+        }).catch(function() {
+          // if not, serve 404
+          res.writeHead(404, headers);
+          res.end('404 Not Found');  
         });
       }
 
@@ -80,24 +78,20 @@ exports.handleRequest = function (req, res) {
     req.on('end', function() {
       // turn the POST request data into an object, which includes a url property
       var postData = qs.parse(body);
-
-      // add URL to list
-      archive.addUrlToList(postData.url, function() {
-        // redirect to our index.html
-        archive.isUrlArchived(postData.url, function(isExist) {
-          if (isExist) {
-            //redirect them to the actual page
-            res.writeHead(302, {'Location': '/' + postData.url});
-            res.end();
-          } else {
-            //redirect them to the loading page
-            res.writeHead(302, {'Location': '/loading.html'});
-            res.end();
-          }
+      
+      archive.addUrlToListAsync(postData.url).then(function() {
+        archive.isUrlArchivedAsync(postData.url).then(function() {
+          //redirect them to the actual page
+          res.writeHead(302, {'Location': '/' + postData.url});
+          res.end();
+        }).catch(function() {
+          //redirect them to the loading page
+          res.writeHead(302, {'Location': '/loading.html'});
+          res.end();
         });
-      });
+      });            
     });
-    
+
   } else {
     res.writeHead(404, headers);
     res.end('404 Not Found');
